@@ -1,0 +1,53 @@
+d
+8:announce35:http://tr.bangumi.moe:6969/announce
+13:announce-listll35:http://tr.bangumi.moe:6969/announcee
+l33:http://t.nyaatracker.com/announcee
+l40:http://open.acgtracker.com:1096/announcee
+l43:http://open.nyaatorrents.info:6544/announcee
+l32:http://t2.popgo.org:7456/annoncee
+l35:http://share.camoe.cn:8080/announcel36:http://opentracker.acgnx.se/announcee
+l32:http://tracker.acgnx.se/announcee
+l36:http://nyaa.tracker.wf:7777/announcee
+l35:udp://104.238.198.186:8000/announcee
+l36:http://104.238.198.186:8000/announcee
+l34:udp://tr.bangumi.moe:6969/announcee
+l30:http://t.acg.rip:6699/announcee
+l37:https://opentracker.acgnx.se/announcee
+l38:https://open.acgnxtracker.com/announcee
+l44:udp://tracker.openbittorrent.com:80/announcee
+l38:udp://tracker.publicbt.com:80/announcee
+l32:udp://tracker.prq.to:80/announcee
+l29:http://94.228.192.98/announcee
+l30:http://share.dmhy.org/annonucee
+l34:http://tracker.btcake.com/announcee
+l37:http://tracker.ktxp.com:6868/announcee
+l37:http://tracker.ktxp.com:7070/announcee
+l33:http://bt.sc-ol.com:2710/announcee
+l35:http://btfile.sdo.com:6961/announcee
+l40:https://t-115.rhcloud.com/only_for_ylbude
+l38:http://exodus.desync.com:6969/announcee
+l35:udp://coppersurfer.tk:6969/announcee
+l39:http://tracker3.torrentino.com/announcee
+l39:http://tracker2.torrentino.com/announcee
+l36:udp://open.demonii.com:1337/announcee
+l31:udp://tracker.ex.ua:80/announcee
+l29:http://pubt.net:2710/announcee
+l32:http://tracker.tfile.me/announcee
+l44:http://bigfoot1942.sektori.org:6969/announcee
+l32:udp://bt.sc-ol.com:2710/announcee
+l42:http://tracker.openbittorrent.com/announcee
+l36:http://tracker.publicbt.com/announcee
+l30:http://tracker.prq.to/announcee
+l36:https://tr.bangumi.moe:9696/announce
+ee
+10:created by
+12:rin-pr/0.5.1
+13:creation datei1522056790e
+8:encoding5:UTF-8
+4:info
+d
+6:lengthi224087087e
+4:name62:[学园奶爸][Gakuen Babysitters][12][简日][1080P][END].mp4
+12:piece lengthi262144e
+6:pieces17100:՚sq(ݠ᝛햽̢....这里都是hash值..e
+5:nodesll4:6881i0eel4:6881i0eel4:8999i0eel5:51413i0eel4:6881i0eel5:51413i0eel4:6889i0eel4:6881i0eel4:6881i0eel4:6881i0eee9:save datei1522226640e8:saved by13:BitComet/1.46e

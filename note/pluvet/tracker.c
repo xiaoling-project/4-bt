@@ -17,60 +17,104 @@
 #include "peer.h"
 #include "tracker.h"
 
-extern unsigned char  info_hash[20];
-extern unsigned char  peer_id[20];
-extern Announce_list  *announce_list_head;
+extern unsigned char info_hash[20];
+extern unsigned char peer_id[20];
+extern Announce_list *announce_list_head;
 
-extern int                 *sock;
-extern struct sockaddr_in  *tracker;
-extern int                 *valid;
-extern int                  tracker_count;
+extern int *sock;
+extern struct sockaddr_in *tracker;
+extern int *valid;
+extern int tracker_count;
 
-extern int                 *peer_sock;
-extern struct sockaddr_in  *peer_addr;
-extern int                 *peer_valid;
-extern int                  peer_count;
+extern int *peer_sock;
+extern struct sockaddr_in *peer_addr;
+extern int *peer_valid;
+extern int peer_count;
 
-Peer_addr  *peer_addr_head = NULL;
+Peer_addr *peer_addr_head = NULL;
 
+/*
+*¹¦ÄÜ£º¸ù¾İHTTPĞ­Òé½øĞĞ±àÂë×ª»»
+*´«Èë²ÎÊı£º
+*	*in 
+*	len1
+*´«³ö²ÎÊı£º
+*	*out
+*	len2
+*·µ»ØÖµ£º
+* -1	´íÎó
+* 0
+*/
 int http_encode(unsigned char *in,int len1,char *out,int len2)
 {
 	int  i, j;
-	char hex_table[16] = "0123456789abcdef";
-
-	if( (len1 != 20) || (len2 <= 90) )  return -1;
-	for(i = 0, j = 0; i < 20; i++, j++) {
+	char hex_table[16] = "0123456789abcdef"; 
+	
+	if( (len1 != 20) || (len2 <= 90) )  
+	{
+		return -1;
+	}	
+	
+	for(i = 0, j = 0; i < 20; i++, j++) 
+	{
 		if( isalpha(in[i]) || isdigit(in[i]) )
+		{//Ó¢ÎÄ×Ö·û
 			out[j] = in[i];
-		else {
+		}
+		else 
+		{ 
 			out[j] = '%';
 			j++;
-			out[j] = hex_table[in[i] >> 4];
+			out[j] = hex_table[in[i] >> 4];//È¡³öASCIIÂëµÄ¸ßËÄÎ»
 			j++;
-			out[j] = hex_table[in[i] & 0xf];
+			out[j] = hex_table[in[i] & 0xf];//È¡³öASCIIÂëµÄµÍËÄÎ»
 		}
 	}
 	out[j] = '\0';
-
+	
 #ifdef DEBUG
 	//printf("http encoded:%s\n",out);
 #endif
-
+	
 	return 0;
 }
+
+/*
+*¹¦ÄÜ£º»ñÈ¡Tracker URLÖĞµÄÖ÷»úÃû²¿·Ö
+*´«Èë²ÎÊı£º
+*	*node ±£´æTrackerµÄURLÁ´±í½Úµã
+*	len
+*´«³ö²ÎÊı£º
+* *nameÖ÷»úÃû³Æ
+*·µ»ØÖµ£º
+* -1 ³ö´í
+* 0
+*/
 
 int get_tracker_name(Announce_list *node,char *name,int len)
 {
 	int i = 0, j = 0;
 
-	if( (len < 64) || (node == NULL) )  return -1;
+	if( (len < 64) || (node == NULL) )  
+	{
+		return -1;
+	}
+		
 	if( memcmp(node->announce,"http://",7) == 0 )
+	{//ÂÔ¹ı"http://"
 		i = i + 7;
-	while( (node->announce[i] != '/') && (node->announce[i] != ':') ) {
+	}
+		
+	while( (node->announce[i] != '/') && (node->announce[i] != ':') ) 
+	{
 		name[j] = node->announce[i];
 		i++;
 		j++;
-		if( i == strlen(node->announce) )  break;
+		
+		if( i == strlen(node->announce) ) 
+		{			
+			break;
+		}
 	}
 	name[j] = '\0';
 
@@ -82,24 +126,54 @@ int get_tracker_name(Announce_list *node,char *name,int len)
 	return 0;
 }
 
+/*
+*¹¦ÄÜ£º»ñÈ¡Tracker URLÖĞµÄ¶Ë¿ÚºÅ
+*´«Èë²ÎÊı£º
+*	*node ±£´æTrackerµÄURLÁ´±í½Úµã
+*´«³ö²ÎÊı£º
+* *port	¶Ë¿ÚºÅ
+*·µ»ØÖµ£º
+* -1 
+* 0
+*/
+
 int get_tracker_port(Announce_list *node,unsigned short *port)
 {
 	int i = 0;
 
-	if( (node == NULL) || (port == NULL) )  return -1;
-	if( memcmp(node->announce,"http://",7) == 0 )  i = i + 7;
-	*port = 0;
-	while( i < strlen(node->announce) ) {
-		if( node->announce[i] != ':')   { i++; continue; }
+	if( (node == NULL) || (port == NULL) )  
+	{
+		return -1;
+	}	
+	
+	if( memcmp(node->announce,"http://",7) == 0 )  
+	{
+		i = i + 7;
+	}
+		
+	*port = 0;//³õÊ¼»¯
+	
+	while( i < strlen(node->announce) ) 
+	{
+		if( node->announce[i] != ':')   
+		{ 
+			i++; 
+			continue; 
+		}
 
 		i++;  // skip ':'
-		while( isdigit(node->announce[i]) ) {
+		
+		while( isdigit(node->announce[i]) ) 
+		{ 
 			*port =  *port * 10 + (node->announce[i] - '0');
 			i++;
 		}
 		break;
 	}
-	if(*port == 0)  *port = 80;
+	if(*port == 0)  
+	{
+		*port = 80;
+	}
 
 #ifdef DEBUG
 	printf("tracker port:%d\n",*port);
@@ -108,22 +182,44 @@ int get_tracker_port(Announce_list *node,unsigned short *port)
 	return 0;
 }
 
+/*
+*¹¦ÄÜ£º¹¹Ôì·¢ËÍµ½Tracker·şÎñÆ÷µÄHTTP GETÇëÇó
+*´«Èë²ÎÊı£º
+*						numwantÊÇÏ£ÍûTracker·µ»ØµÄPeerÊı
+*						nodeÎªÖ¸ÏòTrackerµÄURL
+*						portÎª¼àÌıµÄ¶Ë¿ÚºÅ
+*						downÎªÒÑÏÂÔØµÄÊı¾İÁ¿
+*						upÎªÒÑÉÏ´«µÄÊı¾İÁ¿
+*						leftÎªÊ£Óà¶àÉÙ×Ö½ÚÎ´ÏÂÔØ
+*´«³ö²ÎÊı£º
+*						*requestÓÃÓÚ½ÓÊÕÉú³ÉµÄÇëÇó
+*						lenÎªrequestËùÖ¸ÏòµÄÊı×éµÄ³¤¶È
+*·µ»ØÖµ£º
+* 					-1 
+* 					0
+*/
+
 int create_request(char *request,int len,Announce_list *node,
 				   unsigned short port,long long down,long long up,
 				   long long left,int numwant)
 {
-	char           encoded_info_hash[100];
-	char           encoded_peer_id[100];
-	int            key;
-	char           tracker_name[128];
+	char encoded_info_hash[100];
+	char encoded_peer_id[100];
+	int key;
+	char tracker_name[128];
 	unsigned short tracker_port;
 
+	//HTTPĞ­Òé±àÂë×ª»»
+	//½«ÖÖ×ÓÎÄ¼şÖĞµÄhashÖµ½øĞĞHTTPĞ­Òé±àÂë×ª»»
+	//½«Ëæ»úÖµpeer_id½øĞĞHTTPĞ­Òé±àÂë×ª»»
 	http_encode(info_hash,20,encoded_info_hash,100);
 	http_encode(peer_id,20,encoded_peer_id,100);
 
+	//²úÉúÒ»¸öËæ»úÊıÀ´±êÊ¶¿Í·ş¶Ë
 	srand(time(NULL));
 	key = rand() / 10000;
 
+	//»ñÈ¡Ö÷»úÃûºÍ¶Ë¿ÚºÅ
 	get_tracker_name(node,tracker_name,128);
 	get_tracker_port(node,&tracker_port);
 
@@ -143,136 +239,262 @@ int create_request(char *request,int len,Announce_list *node,
 	return 0;
 }
 
+/*¹¦ÄÜ£º»ñÈ¡Tracker·µ»ØµÄÏûÏ¢
+*´«Èë²ÎÊı£º
+*					bufferÖ¸ÏòTrackerµÄ»ØÓ¦ÏûÏ¢
+*					lenÎªbufferËùÖ¸ÏòµÄÊı×éµÄ³¤¶È
+*´«³ö²ÎÊı£º
+*					total_lengthÓÃÓÚ´æ·ÅTracker·µ»ØÊı¾İµÄ³¤¶È
+*·µ»ØÖµ£º
+* -1
+* 0	µÚÒ»ÖÖÏûÏ¢ÀàĞÍ
+* 1
+*/
 int get_response_type(char *buffer,int len,int *total_length)
 {
 	int i, content_length = 0;
 
-	for(i = 0; i < len-7; i++) {
-		if(memcmp(&buffer[i],"5:peers",7) == 0) {
-			i = i+7;
-			break;
+	//²éÕÒ¹Ø¼ü×Ö"5:peers"
+	for(i = 0; i < len-7; i++) 
+	{
+		if(memcmp(&buffer[i],"5:peers",7) == 0) 
+		{ 
+			i = i+7;//Ìø¹ı"5:peers"
+			break; 
 		}
 	}
-	if(i == len-7)        return -1;  // è¿”å›çš„æ¶ˆæ¯ä¸å«"5:peers"å…³é”®å­—
-	if(buffer[i] != 'l')  return 0;   // è¿”å›çš„æ¶ˆæ¯çš„ç±»å‹ä¸ºç¬¬ä¸€ç§
+	if(i == len-7) 
+	{		
+		return -1;  // ·µ»ØµÄÏûÏ¢²»º¬"5:peers"¹Ø¼ü×Ö
+	}
+		
+	if(buffer[i] != 'l')  
+	{
+		return 0;   // ·µ»ØµÄÏûÏ¢µÄÀàĞÍÎªµÚÒ»ÖÖ
+	}
 
 	*total_length = 0;
-	for(i = 0; i < len-16; i++) {
-		if(memcmp(&buffer[i],"Content-Length: ",16) == 0) {
-			i = i+16;
-			break;
+	//²éÕÒ¹Ø¼ü×Ö"Content-Length: "
+	for(i = 0; i < len-16; i++) 
+	{
+		if(memcmp(&buffer[i],"Content-Length: ",16) == 0) 
+		{
+			i = i+16;//Ìø¹ı"Content-Length: "
+			break; 
 		}
 	}
-	if(i != len-16) {
-		while(isdigit(buffer[i])) {
+	
+	if(i != len-16) 
+	{
+		while(isdigit(buffer[i])) 
+		{
+			//»ñµÃTracker·µ»ØĞÅÏ¢µÄ³¤¶È
 			content_length = content_length * 10 + (buffer[i] - '0');
 			i++;
 		}
-		for(i = 0; i < len-4; i++) {
-			if(memcmp(&buffer[i],"\r\n\r\n",4) == 0)  { i = i+4; break; }
+		
+		//²éÕÒ¹Ø¼ü×Ö"\r\n\r\n"
+		for(i = 0; i < len-4; i++) 
+		{
+			if(memcmp(&buffer[i],"\r\n\r\n",4) == 0)  
+			{ 
+				i = i+4;//Ìø¹ı"\r\n\r\n"
+				break; 
+			}
 		}
-		if(i != len-4)  *total_length = content_length + i;
+		
+		//»ñµÃTracker·µ»ØĞÅÏ¢µÄ×Ü³¤¶È
+		if(i != len-4) 
+		{			
+			*total_length = content_length + i;
+		}
 	}
 
-	if(*total_length == 0)  return -1;
-	else return 1;
+	if(*total_length == 0)  
+	{
+		return -1;
+	}
+	else 
+	{
+		return 1;
+	}
 }
 
+
+/*
+hostent½á¹¹ËµÃ÷ÈçÏÂ£º
+	struct  hostent
+	{
+	    char *h_name;           //ÕıÊ½µÄÖ÷»úÃû³Æ
+	    char **h_aliases;       //Ö¸ÏòÖ÷»úÃû³ÆµÄÆäËû±ğÃû
+	    int h_addrtype;         //µØÖ·µÄĞÍÌ¬£¬ Í¨³£ÊÇAF_INET 
+	    int h_length;           //µØÖ·µÄ³¤¶È
+	    char **h_addr_list;     //´ÓÓòÃû·şÎñÆ÷È¡µÃ¸ÃÖ÷»úµÄËùÓĞµØÖ·
+	};
+*/
+/*
+·µ»ØÖµ £º³É¹¦·µ»Øhostent½á¹¹Ö¸Õë£¬Ê§°ÜÔò·µ»ØNULLÖ¸Õë£¬ ´íÎóÔ­Òò´æÓÚh_errno±äÁ¿ÖĞ
+´íÎó´úÂë£º
+                HOST_NOT_FOUND                ÕÒ²»µ½Ö¸¶¨µÄÖ÷»ú
+                NO_ADDRESS                    ¸ÃÖ÷»úÓĞÃû³ÆÈ´ÎŞIPµØÖ·
+                NO_RECOVERY                   ÓòÃû·şÎñÆ÷ÓĞ´íÎó·¢Éú
+                TRY_AGAIN                     ÇëÔÙµ÷ÓÃÒ»´Î
+*¹¦ÄÜ£ºÒÔ·Ç×èÈûµÄ·½Ê½Á¬½ÓTracker
+*´«Èë²ÎÊı£º
+*´«³ö²ÎÊı£º
+*·µ»ØÖµ£º
+*/
 int prepare_connect_tracker(int *max_sockfd)
 {
-	int             i, flags, ret, count = 0;
+	int i, flags, ret, count = 0;
 	struct hostent  *ht;
-	Announce_list   *p = announce_list_head;
+	Announce_list *p = announce_list_head;
 
-	while(p != NULL)  { count++; p = p->next; }
-	tracker_count = count;
+	while(p != NULL)  
+	{ 
+		count++; 
+		p = p->next; 
+	}
+	
+	tracker_count = count;//»ñÈ¡TrackerµÄURLµÄÊıÁ¿
+	//ÉêÇë´æ´¢socketÎÄ¼şÃèÊö·ûµÄ¶Ñ¿Õ¼ä
 	sock = (int *)malloc(count * sizeof(int));
-	if(sock == NULL)  goto OUT;
+	
+	if(sock == NULL)  
+		goto OUT;
+		
+	//ÉêÇë´æ´¢sockaddr_in ½á¹¹Ìå¶Ñ¿Õ¼ä
 	tracker = (struct sockaddr_in *)malloc(count * sizeof(struct sockaddr_in));
-	if(tracker == NULL)  goto OUT;
+	
+	if(tracker == NULL)  
+		goto OUT;
+		
 	valid = (int *)malloc(count * sizeof(int));
-	if(valid == NULL)  goto OUT;
-
-	p = announce_list_head;
-	for(i = 0; i < count; i++) {
-		char            tracker_name[128];
-		unsigned short  tracker_port = 0;
-
+	
+	if(valid == NULL)  
+		goto OUT;
+	
+	p = announce_list_head;//»ñÈ¡±£´æURLµÄÁ´±íÍ·Ö¸Õë
+	for(i = 0; i < count; i++) 
+	{
+		char tracker_name[128];
+		unsigned short tracker_port = 0;
+		
+		//´´½¨count¸öÍ¨ĞÅ½Úµã
 		sock[i] = socket(AF_INET,SOCK_STREAM,0);
-		if(sock < 0) {
+		if(sock < 0) 
+		{
 			printf("%s:%d socket create failed\n",__FILE__,__LINE__);
 			valid[i] = 0;
 			p = p->next;
 			continue;
 		}
 
+		//»ñÈ¡TrackerµÄURL
 		get_tracker_name(p,tracker_name,128);
+		//»ñÈ¡¶Ë¿ÚºÅ
 		get_tracker_port(p,&tracker_port);
-
-		// ä»ä¸»æœºåè·å–IPåœ°å€
+		
+		// ´ÓÖ÷»úÃû»ñÈ¡IPµØÖ·
 		ht = gethostbyname(tracker_name);
-		if(ht == NULL) {
-			printf("gethostbyname failed:%s\n",hstrerror(h_errno));
+		if(ht == NULL) 
+		{
+			printf("gethostbyname failed:%s\n",hstrerror(h_errno)); 
 			valid[i] = 0;
-		} else {
+		} 
+		else 
+		{
+			//Çå³ısockaddr_in½á¹¹Ìå¿Õ¼ä
 			memset(&tracker[i], 0, sizeof(struct sockaddr_in));
+			//¿½±´IPµØÖ·¡¢¶Ë¿ÚºÅ¡¢Ğ­Òé×åµ½sockaddr_in½á¹¹ÌåÖĞ
 			memcpy(&tracker[i].sin_addr.s_addr, ht->h_addr_list[0], 4);
 			tracker[i].sin_port = htons(tracker_port);
 			tracker[i].sin_family = AF_INET;
 			valid[i] = -1;
 		}
-
+		
 		p = p->next;
 	}
 
-	for(i = 0; i < tracker_count; i++) {
-		if(valid[i] != 0) {
-			if(sock[i] > *max_sockfd) *max_sockfd = sock[i];
-			// è®¾ç½®å¥—æ¥å­—ä¸ºéé˜»å¡
+	for(i = 0; i < tracker_count; i++) 
+	{
+		if(valid[i] != 0) 
+		{
+			if(sock[i] > *max_sockfd) 
+			{
+				*max_sockfd = sock[i];
+			}
+			
+			//»ñÈ¡ÎÄ¼ş·ÃÎÊÄ£Ê½
 			flags = fcntl(sock[i],F_GETFL,0);
+			// ÉèÖÃÌ×½Ó×ÖÎª·Ç×èÈû
 			fcntl(sock[i],F_SETFL,flags|O_NONBLOCK);
-			// è¿æ¥tracker
+			
+			// Á¬½Ótracker
 			ret = connect(sock[i],(struct sockaddr *)&tracker[i],
 				          sizeof(struct sockaddr));
-			if(ret < 0 && errno != EINPROGRESS)  valid[i] = 0;
-			// å¦‚æœè¿”å›0ï¼Œè¯´æ˜è¿æ¥å·²ç»å»ºç«‹
-			if(ret == 0)  valid[i] = 1;
+				          
+			if(ret < 0 && errno != EINPROGRESS) 
+			{				
+				valid[i] = 0;	
+			}
+			// Èç¹û·µ»Ø0£¬ËµÃ÷Á¬½ÓÒÑ¾­½¨Á¢
+			if(ret == 0)  
+			{
+				valid[i] = 1;  
+			}
 		}
 	}
 
 	return 0;
 
 OUT:
-	if(sock != NULL)    free(sock);
+	if(sock != NULL) free(sock);
 	if(tracker != NULL) free(tracker);
-	if(valid != NULL)   free(valid);
+	if(valid != NULL) free(valid);
 	return -1;
 }
 
+
+/*
+*¹¦ÄÜ£ºÒÔ·Ç×èÈûµÄ·½Ê½Á¬½Ópeer
+*´«Èë²ÎÊı£º
+*´«³ö²ÎÊı£º
+*·µ»ØÖµ£º
+*/
 int prepare_connect_peer(int *max_sockfd)
 {
 	int       i, flags, ret, count = 0;
 	Peer_addr *p;
-
-	p = peer_addr_head;
-	while(p != 0)  { count++; p = p->next; }
+	
+	p = peer_addr_head;//»ñµÃ±£´æPeerIPµØÖ·ºÍ¶Ë¿ÚºÅµÄÁ´±íÍ·Ö¸Õë
+	while(p != 0)  
+	{ 
+		count++; 
+		p = p->next; 
+	}
 
 	peer_count = count;
 	peer_sock = (int *)malloc(count*sizeof(int));
 	if(peer_sock == NULL)  goto OUT;
+		
 	peer_addr = (struct sockaddr_in *)malloc(count*sizeof(struct sockaddr_in));
 	if(peer_addr == NULL)  goto OUT;
+		
 	peer_valid = (int *)malloc(count*sizeof(int));
 	if(peer_valid == NULL) goto OUT;
-
-	p = peer_addr_head;  // æ­¤å¤„pé‡æ–°èµ‹å€¼
-	for(i = 0; i < count && p != NULL; i++) {
+	
+	p = peer_addr_head;  // ´Ë´¦pÖØĞÂ¸³Öµ
+	for(i = 0; i < count && p != NULL; i++) 
+	{
+		//´´½¨count¸öÍ¨ĞÅ½Úµã²¢»ñµÃÎÄ¼şÃèÊö·û
 		peer_sock[i] = socket(AF_INET,SOCK_STREAM,0);
-		if(peer_sock[i] < 0) {
+		if(peer_sock[i] < 0) 
+		{ 
 			printf("%s:%d socket create failed\n",__FILE__,__LINE__);
 			valid[i] = 0;
 			p = p->next;
-			continue;
+			continue; 
 		}
 
 		memset(&peer_addr[i], 0, sizeof(struct sockaddr_in));
@@ -280,24 +502,28 @@ int prepare_connect_peer(int *max_sockfd)
 		peer_addr[i].sin_port = htons(p->port);
 		peer_addr[i].sin_family = AF_INET;
 		peer_valid[i] = -1;
-
+		
 		p = p->next;
 	}
 	count = i;
-
-	for(i = 0; i < count; i++) {
-		if(peer_sock[i] > *max_sockfd) *max_sockfd = peer_sock[i];
-		// è®¾ç½®å¥—æ¥å­—ä¸ºéé˜»å¡
+	
+	for(i = 0; i < count; i++) 
+	{
+		if(peer_sock[i] > *max_sockfd) 
+			*max_sockfd = peer_sock[i];
+		// ÉèÖÃÌ×½Ó×ÖÎª·Ç×èÈû
 		flags = fcntl(peer_sock[i],F_GETFL,0);
 		fcntl(peer_sock[i],F_SETFL,flags|O_NONBLOCK);
-		// è¿æ¥peer
+		// Á¬½Ópeer
 		ret = connect(peer_sock[i],(struct sockaddr *)&peer_addr[i],
 			          sizeof(struct sockaddr));
-		if(ret < 0 && errno != EINPROGRESS)  peer_valid[i] = 0;
-		// å¦‚æœè¿”å›0ï¼Œè¯´æ˜è¿æ¥å·²ç»å»ºç«‹
-		if(ret == 0)  peer_valid[i] = 1;
+		if(ret < 0 && errno != EINPROGRESS)  
+			peer_valid[i] = 0;
+		// Èç¹û·µ»Ø0£¬ËµÃ÷Á¬½ÓÒÑ¾­½¨Á¢
+		if(ret == 0)  
+			peer_valid[i] = 1;
 	}
-
+	
 	free_peer_addr_head();
 	return 0;
 
@@ -308,17 +534,28 @@ OUT:
 	return -1;
 }
 
+/*
+*¹¦ÄÜ:½âÎöµÚÒ»ÖÖTrackerµÄ»ØÓ¦ÏûÏ¢
+*´«Èë²ÎÊı£º
+*´«³ö²ÎÊı£º
+*·µ»ØÖµ£º
+*
+*/
 int parse_tracker_response1(char *buffer,int ret,char *redirection,int len)
 {
 	int           i, j, count = 0;
 	unsigned char c[4];
 	Peer_addr     *node, *p;
 
-	for(i = 0; i < ret - 10; i++) {
-		if(memcmp(&buffer[i],"Location: ",10) == 0) {
-			i = i + 10;
+	//²éÕÒ¹Ø¼ü×Ö"Location: "
+	for(i = 0; i < ret - 10; i++) 
+	{
+		if(memcmp(&buffer[i],"Location: ",10) == 0) 
+		{ 
+			i = i + 10;//Ìø¹ı"Location: "
 			j = 0;
-			while(buffer[i]!='?' && i<ret && j<len) {
+			while(buffer[i]!='?' && i<ret && j<len) 
+			{
 				redirection[j] = buffer[i];
 				i++;
 				j++;
@@ -326,61 +563,84 @@ int parse_tracker_response1(char *buffer,int ret,char *redirection,int len)
 			redirection[j] = '\0';
 			return 1;
 		}
+	                                                                                                                                        
 	}
 
-	// è·å–è¿”å›çš„peeræ•°,å…³é”®è¯"5:peers"ä¹‹åä¸ºå„ä¸ªPeerçš„IPå’Œç«¯å£
-	for(i = 0; i < ret - 7; i++) {
-		if(memcmp(&buffer[i],"5:peers",7) == 0) { i = i + 7; break; }
+	// »ñÈ¡·µ»ØµÄpeerÊı,¹Ø¼ü´Ê"5:peers"Ö®ºóÎª¸÷¸öPeerµÄIPºÍ¶Ë¿Ú
+	for(i = 0; i < ret - 7; i++) 
+	{
+		if(memcmp(&buffer[i],"5:peers",7) == 0)
+		{ 
+			i = i + 7; 
+			break; 
+		}
 	}
-	if(i == ret - 7	) {
+	
+	if(i == ret - 7	) 
+	{ 
 		printf("%s:%d can not find keyword 5:peers \n",__FILE__,__LINE__);
-		return -1;
+		return -1; 
 	}
-	while( isdigit(buffer[i]) ) {
+	
+	while( isdigit(buffer[i]) ) 
+	{
 		count = count * 10 + (buffer[i] - '0');
 		i++;
 	}
-	i++;  // è·³è¿‡":"
+	i++;  // Ìø¹ı":"
 
+	//»ñµÃIPµØÖ·ºÍ¶Ë¿ÚµÄÊıÁ¿
 	count = (ret - i) / 6;
-
-	// å°†æ¯ä¸ªpeerçš„IPå’Œç«¯å£ä¿å­˜åˆ°peer_addr_headæŒ‡å‘çš„é“¾è¡¨ä¸­
-	for(; count != 0; count--) {
+		
+	// ½«Ã¿¸öpeerµÄIPºÍ¶Ë¿Ú±£´æµ½peer_addr_headÖ¸ÏòµÄÁ´±íÖĞ
+	for(; count != 0; count--) 
+	{
 		node = (Peer_addr*)malloc(sizeof(Peer_addr));
-		c[0] = buffer[i];   c[1] = buffer[i+1];
-		c[2] = buffer[i+2]; c[3] = buffer[i+3];
+		
+		c[0] = buffer[i];   
+		c[1] = buffer[i+1]; 
+		c[2] = buffer[i+2];
+		c[3] = buffer[i+3];
+		 
 		sprintf(node->ip,"%u.%u.%u.%u",c[0],c[1],c[2],c[3]);
 		i += 4;
 		node->port = ntohs(*(unsigned short*)&buffer[i]);
 		i += 2;
 		node->next = NULL;
-
-		// åˆ¤æ–­å½“å‰peeræ˜¯å¦å·²ç»å­˜åœ¨äºé“¾è¡¨ä¸­
+	
+		// ÅĞ¶Ïµ±Ç°peerÊÇ·ñÒÑ¾­´æÔÚÓÚÁ´±íÖĞ
 		p = peer_addr_head;
-		while(p != NULL) {
-			if( memcmp(node->ip,p->ip,strlen(node->ip)) == 0 ) {
-				free(node);
+		while(p != NULL) 
+		{
+			if( memcmp(node->ip,p->ip,strlen(node->ip)) == 0 ) 
+			{ 
+				//ÒÑ´æÔÚÊÍ·Åµ±Ç°½áµã²»½øĞĞ´æ´¢
+				free(node); 
 				break;
 			}
 			p = p->next;
 		}
-
-		// å°†å½“å‰ç»“ç‚¹æ·»åŠ åˆ°é“¾è¡¨ä¸­
-		if(p == NULL) {
+			
+		// ½«µ±Ç°½áµãÌí¼Óµ½Á´±íÖĞ
+		if(p == NULL) 
+		{
 			if(peer_addr_head == NULL)
 				peer_addr_head = node;
-			else {
+			else 
+			{
 				p = peer_addr_head;
-				while(p->next != NULL) p = p->next;
+				while(p->next != NULL) 
+					p = p->next;
 				p->next = node;
 			}
 		}
 	}
-
+		
 #ifdef DEBUG
 		count = 0;
 		p = peer_addr_head;
-		while(p != NULL) {
+		while(p != NULL) 
+		{
 			printf("+++ connecting peer %-16s:%-5d +++ \n",p->ip,p->port);
 			p = p->next;
 			count++;
@@ -391,79 +651,117 @@ int parse_tracker_response1(char *buffer,int ret,char *redirection,int len)
 		return 0;
 }
 
+/*
+*¹¦ÄÜ:½âÎöµÚ¶şÖÖTrackerµÄ»ØÓ¦ÏûÏ¢
+*´«Èë²ÎÊı£º
+*´«³ö²ÎÊı£º
+*·µ»ØÖµ£º
+*/
+
 int parse_tracker_response2(char *buffer,int ret)
 {
 	int        i, ip_len, port;
 	Peer_addr  *node = NULL, *p = peer_addr_head;
 
-	if(peer_addr_head != NULL) {
+	if(peer_addr_head != NULL) 
+	{
 		printf("Must free peer_addr_head\n");
 		return -1;
 	}
-
-	for(i = 0; i < ret; i++) {
-		if(memcmp(&buffer[i],"2:ip",4) == 0) {
-			i += 4;
+	
+	for(i = 0; i < ret; i++) 
+	{
+		if(memcmp(&buffer[i],"2:ip",4) == 0) 
+		{
+			i += 4;//Ìø¹ı"2:ip"
 			ip_len = 0;
-			while(isdigit(buffer[i])) {
+			
+			//»ñµÃIPµÄ³¤¶È
+			while(isdigit(buffer[i])) 
+			{
 				ip_len = ip_len * 10 + (buffer[i] - '0');
 				i++;
 			}
 			i++;  // skip ":"
 			node = (Peer_addr*)malloc(sizeof(Peer_addr));
-			if(node == NULL) {
-				printf("%s:%d error",__FILE__,__LINE__);
+			if(node == NULL) 
+			{ 
+				printf("%s:%d error",__FILE__,__LINE__); 
 				continue;
 			}
+			
+			//½«IP´æÈëÁ´±íÖĞ
 			memcpy(node->ip,&buffer[i],ip_len);
 			(node->ip)[ip_len] = '\0';
 			node->next = NULL;
 		}
-		if(memcmp(&buffer[i],"4:port",6) == 0) {
+		
+		if(memcmp(&buffer[i],"4:port",6) == 0) 
+		{
 			i += 6;
 			i++;  // skip "i"
 			port = 0;
-			while(isdigit(buffer[i])) {
+			while(isdigit(buffer[i])) 
+			{
 				port = port * 10 + (buffer[i] - '0');
 				i++;
 			}
-			if(node != NULL)  node->port = port;
-			else continue;
-
+			if(node != NULL)  
+				node->port = port;
+			else 
+				continue;
+			
 			printf("+++ add a peer %-16s:%-5d +++ \n",node->ip,node->port);
-
-			if(p == peer_addr_head) { peer_addr_head = node; p = node; }
-			else p->next = node;
+			
+			//¸Ğ¾õÓĞÎÊÌâ
+			if(p == peer_addr_head) 
+			{ 
+				peer_addr_head = node; 
+				p = node; 
+			}
+			else 
+				p->next = node;
 			node = NULL;
 		}
 	}
-
+	
 	return 0;
 }
+
+
+/*
+*¹¦ÄÜ:ÎªÒÑ½¨Á¢Á¬½ÓµÄpeer´´½¨peer½áµã²¢¼ÓÈëµ½peerÁ´±íÖĞ
+*´«Èë²ÎÊı£º
+*´«³ö²ÎÊı£º
+*·µ»ØÖµ£º
+*/
 
 int add_peer_node_to_peerlist(int *sock,struct sockaddr_in saptr)
 {
 	Peer *node;
-
+	
 	node = add_peer_node();
-	if(node == NULL)  return -1;
-
+	if(node == NULL)  
+		return -1;
+	
 	node->socket = *sock;
 	node->port   = ntohs(saptr.sin_port);
-	node->state  = INITIAL;
+	node->state  = INITIAL;//´¦ÓÚ³õÊ¼»¯×´Ì¬
 	strcpy(node->ip,inet_ntoa(saptr.sin_addr));
-	node->start_timestamp = time(NULL);
+	node->start_timestamp = time(NULL);//±£´æ×î½üÒ»´Î¸øPeer·¢ËÍÏûÏ¢µÄÊ±¼ä
 
 	return 0;
 }
 
+//ÊÍ·ÅPeer_addr½á¹¹¶Ñ¿Õ¼ä
 void free_peer_addr_head()
 {
 	Peer_addr *p = peer_addr_head;
-    while(p != NULL) {
+  while(p != NULL) 
+  {
 		p = p->next;
 		free(peer_addr_head);
 		peer_addr_head = p;
-    }
+  }
 	peer_addr_head = NULL;
 }

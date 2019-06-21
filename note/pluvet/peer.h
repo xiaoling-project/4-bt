@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <time.h>
+
 #include "bitfield.h"
 
 #define  INITIAL              -1  // 表明处于初始化状态
@@ -14,7 +15,7 @@
 #define  CLOSING               5  // 表明处于即将与peer断开的状态
 
 // 发送和接收缓冲区的大小,16K可以存放一个slice,2K可以存放其他消息
-#define  MSG_SIZE  2*1024+16*1024
+#define  MSG_SIZE  2*1024+16*1024 //前2K放其他数据
 
 typedef struct _Request_piece {
 	int     index;                // 请求的piece的索引
@@ -37,7 +38,7 @@ typedef struct  _Peer {
 	int            peer_interested;       // 是否被peer感兴趣
 
 	Bitmap         bitmap;                // 存放peer的位图
-
+	
 	char           *in_buff;              // 存放从peer处获取的消息
 	int            buff_len;              // 缓存区in_buff的长度
 	char           *out_msg;              // 存放将发送给peer的消息

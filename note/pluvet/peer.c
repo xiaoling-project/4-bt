@@ -1,3 +1,5 @@
+//peer.c
+
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
@@ -33,7 +35,7 @@ int  initialize_peer(Peer *peer)
 	if(peer->out_msg == NULL)  goto OUT;
 	memset(peer->out_msg,0,MSG_SIZE);
 	peer->msg_len  = 0;
-
+	
 	peer->out_msg_copy = (char *)malloc(MSG_SIZE);
 	if(peer->out_msg_copy == NULL)  goto OUT;
 	memset(peer->out_msg_copy,0,MSG_SIZE);
@@ -44,27 +46,27 @@ int  initialize_peer(Peer *peer)
 	peer->am_interested   = 0;
 	peer->peer_choking    = 1;
 	peer->peer_interested = 0;
-
+	
 	peer->bitmap.bitfield        = NULL;
 	peer->bitmap.bitfield_length = 0;
 	peer->bitmap.valid_length    = 0;
-
+	
 	peer->Request_piece_head     = NULL;
 	peer->Requested_piece_head   = NULL;
-
+	
 	peer->down_total = 0;
 	peer->up_total   = 0;
-
+	
 	peer->start_timestamp     = 0;
 	peer->recet_timestamp     = 0;
-
+	
 	peer->last_down_timestamp = 0;
 	peer->last_up_timestamp   = 0;
 	peer->down_count          = 0;
 	peer->up_count            = 0;
 	peer->down_rate           = 0.0;
 	peer->up_rate             = 0.0;
-
+	
 	peer->next = (Peer *)0;
 	return 0;
 
@@ -82,14 +84,14 @@ Peer* add_peer_node()
 
 	// 分配内存空间
 	node = (Peer *)malloc(sizeof(Peer));
-	if(node == NULL)  {
-		printf("%s:%d error\n",__FILE__,__LINE__);
+	if(node == NULL)  { 
+		printf("%s:%d error\n",__FILE__,__LINE__); 
 		return NULL;
 	}
 
 	// 进行初始化
 	ret = initialize_peer(node);
-	if(ret < 0) {
+	if(ret < 0) { 
 		printf("%s:%d error\n",__FILE__,__LINE__);
 		free(node);
 		return NULL;
@@ -146,14 +148,14 @@ int cancel_request_list(Peer *node)
 int cancel_requested_list(Peer *node)
 {
 	Request_piece  *p;
-
+	
 	p = node->Requested_piece_head;
 	while(p != NULL) {
 		node->Requested_piece_head = node->Requested_piece_head->next;
 		free(p);
 		p = node->Requested_piece_head;
 	}
-
+	
 	return 0;
 }
 
@@ -165,7 +167,7 @@ void  free_peer_node(Peer *node)
 		node->bitmap.bitfield = NULL;
 	}
 	if(node->in_buff != NULL) {
-		free(node->in_buff);
+		free(node->in_buff); 
 		node->in_buff = NULL;
 	}
 	if(node->out_msg != NULL) {

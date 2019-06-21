@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
 #include "parse_metafile.h"
 #include "peer.h"
 #include "data.h"
@@ -12,17 +13,17 @@ long long      total_down = 0L, total_up = 0L;
 float          total_down_rate = 0.0F, total_up_rate = 0.0F;
 int            total_peers = 0;
 
-extern int end_mode;    // 是否已进入终端模式
-extern Bitmap *bitmap;  // 指向己方的位图
-extern Peer *peer_head;     // 指向Peer链表
-extern int pieces_length;   // 所有piece hash值的长度
-extern int piece_length;    // 每个piece的长度
+extern int	   end_mode;
+extern Bitmap  *bitmap;
+extern Peer    *peer_head;
+extern int     pieces_length;
+extern int     piece_length;
 
-extern Btcache *btcache_head;   // 指向存放下载数据的缓冲区
-extern int last_piece_index;    // 最后一个piece的index
-extern int last_piece_count;    // 最后一个piece所含的slice数
-extern int last_slice_len;      // 最后一个piece的最后一个slice的长度
-extern int download_piece_num;  // 已下载的piece数
+extern Btcache *btcache_head;
+extern int     last_piece_index;
+extern int     last_piece_count;
+extern int     last_slice_len;
+extern int     download_piece_num;
 
 // 初始化全局变量unchoke_peers
 void init_unchoke_peers()
@@ -86,8 +87,11 @@ int select_unchoke_peer()
 			if(p == unchoke_peers.unchkpeer[i])  break;
 			p = p->next;
 		}
+  
 		if(p == NULL)  { unchoke_peers.unchkpeer[i] = NULL; j++; }
-	}
+  //缺少符号
+       }
+ 
 	if(j != 0) {
 		unchoke_peers.count = unchoke_peers.count - j;
 		for(i = 0, j = 0; i < len; i++) {
@@ -120,11 +124,13 @@ int select_unchoke_peer()
 			for(i = 0; i < len; i++) {
 				if(p == force_choke[i]) break;
 			}
+            //不在force_choke里面
 			if(i == len) {
 				if( index < UNCHOKE_COUNT ) {
 					now_fast[index] = p;
 					index++;
 				} else {
+                    //选出最慢的peer，拿出来跟新进的peer进行匹对
 					j = get_last_index(now_fast,UNCHOKE_COUNT);
 					if(p->down_rate >= now_fast[j]->down_rate) now_fast[j] = p;
 				}
@@ -140,6 +146,7 @@ int select_unchoke_peer()
 	}
 
 	// 假设unchoke_peers.unchkpeer中所有peer都是choke的
+    //
 	for(i = 0; i < unchoke_peers.count; i++) {
 		Peer*  q = (unchoke_peers.unchkpeer)[i];
 		choke_socket[i] = q->socket;
@@ -205,6 +212,7 @@ int get_rand_numbers(int length)
 	for(i = 0; i < piece_count; i++)  temp_num[i] = i;
 
 	srand(time(NULL));
+    //random ??
 	for(i = 0; i < piece_count; i++) {
         index = (int)( (float)(piece_count-i) * rand() / (RAND_MAX+1.0) );
 		rand_num[i] = temp_num[index];
@@ -235,6 +243,7 @@ int select_optunchoke_peer()
 		printf("%s:%d get rand numbers error\n",__FILE__,__LINE__);
 		return -1;
 	}
+
 	while(i < count) {
 		// 随机选择一个数,该数在0～count-1之间
 		index = rand_num[i];
@@ -249,6 +258,8 @@ int select_optunchoke_peer()
 		if( is_in_unchoke_peers(p) != 1 && is_seed(p) != 1 && p->state == DATA &&
 			p != unchoke_peers.optunchkpeer && is_interested(bitmap,&(p->bitmap)) ) {
 
+            //停掉之前的optchocker
+            //确认optchocker存在peer_head里面，然后停掉它
 			if( (unchoke_peers.optunchkpeer) != NULL ) {
 				Peer  *temp = peer_head;
 				while( temp != NULL ) {
@@ -382,7 +393,7 @@ int create_req_slice_msg(Peer *node)
 		// 当前piece还有未请求的slice,则构造请求消息
 		if(p->begin < last_begin) {
 			index = p->index;
-			begin = p->begin + 16*1024;
+			begin = p->begin + 16*1024; // 每个piece大小为 16k
 			count = 0;
 
 			while(begin!=piece_length && count<1) {

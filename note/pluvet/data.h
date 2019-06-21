@@ -1,8 +1,10 @@
+//data.h
+// 缓冲管理模块
 #ifndef DATA_H
 #define DATA_H
-#include "peer.h"
 
-// 每个Btcache结点维护一个长度为16KB的缓冲区,该缓冲区保存一个slice的数据
+#include "peer.h"
+//每个Btcache结点维护一个长度为16KB的缓冲区，该缓冲区保存一个slice的数据
 typedef struct _Btcache {
 	unsigned char   *buff;        // 指向缓冲区的指针
 	int             index;        // 数据所在的piece块的索引
@@ -51,7 +53,7 @@ int write_slice_to_btcache(int index,int begin,int length,
 int read_slice_for_send(int index,int begin,int length,Peer *peer);
 
 
-// 以下是为下载和上传最后一个piece而增加的函数
+// 以下是为下载和上传最后一个piece而增加的函数 
 // 最后一个piece较为特殊,因为它是一个不完整的piece
 int write_last_piece_to_btcache(Peer *peer);
 int write_slice_to_last_piece(int index,int begin,int length,
@@ -59,5 +61,6 @@ int write_slice_to_last_piece(int index,int begin,int length,
 int read_last_piece_from_harddisk(Btcache *p, int index);
 int read_slice_for_send_last_piece(int index,int begin,int length,Peer *peer);
 void release_last_piece();
+
 
 #endif
